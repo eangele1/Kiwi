@@ -1,14 +1,7 @@
 import React from 'react';
 import SQLite from 'react-native-sqlite-storage';
 
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+import { SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar } from 'react-native';
 
 const App: () => React$Node = () => {
   return (
