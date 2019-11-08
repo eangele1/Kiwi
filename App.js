@@ -1,5 +1,4 @@
 import React from 'react';
-import SQLite from 'react-native-sqlite-storage';
 
 import { SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar } from 'react-native';
 
