@@ -1,13 +1,18 @@
-import React from 'react';
+import { createStackNavigator } from 'react-navigation-stack';
+import { createAppContainer } from 'react-navigation';
+import { createBottomTabNavigator } from 'react-navigation-tabs';
 
-import { SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar } from 'react-native';
+import LoginScreen from './Login.js';
 
-const App: () => React$Node = () => {
-  return (
-    <View>
-      <Text style={{ textAlign: "center" }}>This has nothing in it. For now...</Text>
-    </View>
-  );
-};
+const AppNavigator = createStackNavigator(
+  //binds screens to navigation name to allow buttons to go to that screen
+  {
+    "Login": LoginScreen
+  },
+  {
+    //first screen to enter when opening the app
+    initialRouteName: "Login"
+  }
+);
 
-export default App;
+export default createAppContainer(AppNavigator);

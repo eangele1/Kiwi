@@ -1,23 +1,67 @@
-import { KeyboardAvoidingView, Image, Stylesheet, View } from 'react-native';
-import logo from "../assets/images/logo.png"
+import React from 'react';
+import { KeyboardAvoidingView, Image, StyleSheet, View } from 'react-native';
+import logo from "./assets/images/logo.png"
 import SQLite from 'react-native-sqlite-storage';
+import Button from "./components/Button.js";
+import FormTextInput from "./components/FormTextInput.js";
 
-state = {
-    email: "",
-    password: "",
-    emailTouched: false,
-    passwordTouched: false,
-}
+export default class LoginScreen extends React.PureComponent {
 
-export default class HomeScreen extends React.PureComponent {
+    static navigationOptions = {
+        /* turns off default header for the screen */
+        header: null,
+    };
+
+    state = {
+        username: "",
+        password: "",
+    };
+
+    handleAuth = () => {
+        alert("Now signing in...soon.");
+    }
+
+    handleUsernameChange = (username) => {
+        this.setState({ username: username });
+    }
+
+    handlePasswordChange = (password) => {
+        this.setState({ password: password });
+    }
+
+    handleLoginPress = () => {
+        if (this.state.username == "" && this.state.password == "") {
+            alert("No username or password entered!");
+        }
+        else if (this.state.username == "") {
+            alert("No username entered!");
+        }
+        else if (this.state.password == "") {
+            alert("No password entered!");
+        }
+        else {
+            this.handleAuth();
+        }
+    }
+
     render() {
         return (
-            <KeyboardAvoidingView style={styles.container}>
+            <View style={styles.container}>
                 <Image source={logo} style={styles.logo} />
                 <View style={styles.form}>
-                    <Text style={{ textAlign: "center" }}>This has nothing in it. For now...</Text>
+                    <FormTextInput
+                        value={this.state.username}
+                        onChangeText={this.handleUsernameChange}
+                        placeholder={"Username"}
+                    />
+                    <FormTextInput
+                        value={this.state.password}
+                        onChangeText={this.handlePasswordChange}
+                        placeholder={"Password"}
+                    />
+                    <Button label={"Sign In"} onPress={this.handleLoginPress} />
                 </View>
-            </KeyboardAvoidingView>
+            </View>
         );
     }
 }
@@ -31,9 +75,10 @@ const styles = StyleSheet.create({
     },
     logo: {
         flex: 1,
-        width: "100%",
+        width: "50%",
         resizeMode: "contain",
-        alignSelf: "center"
+        alignSelf: "center",
+        marginTop: 25
     },
     form: {
         flex: 1,
