@@ -7,6 +7,8 @@ import Button from "./components/Button.js";
 import FormTextInput from "./components/FormTextInput.js";
 import AsyncStorage from '@react-native-community/async-storage';
 
+let db;
+
 export default class LoginScreen extends React.PureComponent {
 
     static navigationOptions = {
@@ -65,17 +67,38 @@ export default class LoginScreen extends React.PureComponent {
         this.props.navigation.dispatch(resetAction);
     }
 
+    openSuccess() {
+        console.log("Database is open!");
+    }
+
+    openError(err) {
+        console.log("Error: ", err);
+    }
+
+    closeDatabase = () => {
+        if (db) {
+            console.log("Closing database.");
+            db.close();
+        } else {
+            console.log("Database was not OPEN?!");
+        }
+    }
+
     handleAuth = () => {
 
-        /* INSERT DATABASE CODE HERE */
+        db.transaction(tx => {
+            let sql = "SELECT u_ID, u_name, u_password, u_type FROM user WHERE u_name = '" + this.state.username + "' AND u_password = '" + this.state.password + "';";
+            tx.executeSql(sql, [], (tx, results) => {
+                const len = results.rows.length;
+                if (!len) {
+                    alert("Incorrect username or password!");
+                } else {
+                    this.logIn();
+                    this.checkLoginState();
+                }
+            });
+        });
 
-        if (this.state.username == "letme" && this.state.password == "inplease") {
-            this.logIn();
-            this.goToMainMenu();
-        }
-        else {
-            alert("Incorrect username or password!");
-        }
     }
 
     handleUsernameChange = (username) => { this.setState({ username: username }); }
@@ -98,6 +121,11 @@ export default class LoginScreen extends React.PureComponent {
 
     async componentDidMount() {
         this.checkLoginState();
+        db = SQLite.openDatabase({ name: "KIWI", createFromLocation: "KIWI.db" }, this.openSuccess, this.openError);
+    }
+
+    componentWillUnmount() {
+        this.closeDatabase();
     }
 
     renderPlaceholder() {
