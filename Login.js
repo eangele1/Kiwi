@@ -24,9 +24,11 @@ export default class LoginScreen extends React.PureComponent {
     };
 
     /* Logs user in the application */
-    logIn = async () => {
+    logIn = async (u_ID, u_type) => {
         try {
             await AsyncStorage.setItem('isLoggedIn', "true");
+            await AsyncStorage.setItem('user_ID', u_ID.toString());
+            await AsyncStorage.setItem('user_type', u_type);
         } catch (e) {
             alert(e);
         }
@@ -93,7 +95,8 @@ export default class LoginScreen extends React.PureComponent {
                 if (!len) {
                     alert("Incorrect username or password!");
                 } else {
-                    this.logIn();
+                    const user = results.rows.item(0);
+                    this.logIn(user.u_ID, user.u_type);
                     this.checkLoginState();
                 }
             });
