@@ -7,7 +7,9 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import LoginScreen from './Login.js';
 import HomeScreen from './Home.js';
 import InfoScreen from './Information.js';
-import ArchiveScreen from './Archive.js'
+import ArchiveScreen from './Archive.js';
+import ForgotScreen from './Forgot.js';
+import InfoChangeScreen from './InfoChange.js';
 
 const TabNavigation = createBottomTabNavigator({
   Home: {
@@ -59,7 +61,9 @@ const AppNavigator = createStackNavigator(
   //binds screens to navigation name to allow buttons to go to that screen
   {
     "Login": LoginScreen,
-    "MainMenu": TabNavigation
+    "MainMenu": TabNavigation,
+    "Forgot": ForgotScreen,
+    "Info Change": InfoChangeScreen
   },
   {
     //first screen to enter when opening the app

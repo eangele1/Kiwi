@@ -1,8 +1,8 @@
 import React from 'react';
 import { KeyboardAvoidingView, Image, StyleSheet, View, ActivityIndicator, Text } from 'react-native';
-import { StackActions, NavigationActions } from 'react-navigation';
+import { StackActions, NavigationActions, NavigationEvents } from 'react-navigation';
 import logo from "./assets/images/logo.png";
-import SQLite from 'react-native-sqlite-storage';
+import { openDatabase } from 'react-native-sqlite-storage';
 import Button from "./components/Button.js";
 import FormTextInput from "./components/FormTextInput.js";
 import AsyncStorage from '@react-native-community/async-storage';
@@ -40,6 +40,7 @@ export default class LoginScreen extends React.PureComponent {
             let loginState = await AsyncStorage.getItem('isLoggedIn');
             if (loginState == null) {
                 this.setState({ isLoggedIn: false });
+                this.manageScreens();
             }
             else {
                 loginState = (loginState == 'true');
@@ -89,7 +90,7 @@ export default class LoginScreen extends React.PureComponent {
     handleAuth = () => {
 
         db.transaction(tx => {
-            let sql = "SELECT u_ID, u_name, u_password, u_type FROM user WHERE u_name = '" + this.state.username + "' AND u_password = '" + this.state.password + "';";
+            let sql = "SELECT u_ID, u_type FROM user WHERE u_name = '" + this.state.username + "' AND u_password = '" + this.state.password + "';";
             tx.executeSql(sql, [], (tx, results) => {
                 const len = results.rows.length;
                 if (!len) {
@@ -124,7 +125,7 @@ export default class LoginScreen extends React.PureComponent {
 
     async componentDidMount() {
         this.checkLoginState();
-        db = SQLite.openDatabase({ name: "KIWI", createFromLocation: "KIWI.db" }, this.openSuccess, this.openError);
+        db = openDatabase({ name: 'KIWI.db', createFromLocation: 1 }, this.openSuccess, this.openError);
     }
 
     componentWillUnmount() {
@@ -140,6 +141,10 @@ export default class LoginScreen extends React.PureComponent {
         )
     }
 
+    refresh = () => {
+        db = openDatabase({ name: 'KIWI.db', createFromLocation: 1 }, this.openSuccess, this.openError);
+    }
+
     render() {
 
         if (!this.state.isReady) {
@@ -148,6 +153,7 @@ export default class LoginScreen extends React.PureComponent {
 
         return (
             <View style={styles.container}>
+                <NavigationEvents onDidFocus={() => this.refresh()} />
                 <Image source={logo} style={styles.logo} />
                 <View style={styles.form}>
                     <FormTextInput
@@ -161,6 +167,7 @@ export default class LoginScreen extends React.PureComponent {
                         placeholder={"Password"}
                     />
                     <Button label={"Sign In"} onPress={this.handleLoginPress} />
+                    <Text style={styles.forgot} onPress={() => this.props.navigation.navigate("Forgot")}>Forgot Username or Password?</Text>
                 </View>
             </View>
         );
@@ -185,5 +192,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         width: "80%"
+    },
+    forgot: {
+        color: "#007aff",
+        fontSize: 16,
+        marginTop: 10,
+        textAlign: "center"
     }
 });
