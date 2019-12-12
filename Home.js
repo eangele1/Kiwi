@@ -9,6 +9,7 @@ import { openDatabase } from 'react-native-sqlite-storage';
 import { images } from './user_images.js';
 
 let db;
+let userImgSource;
 
 export default class HomeScreen extends React.PureComponent {
 
@@ -48,8 +49,9 @@ export default class HomeScreen extends React.PureComponent {
     }
 
     async componentDidMount() {
-        db = openDatabase({ name: 'KIWI.db', createFromLocation: 1 }, this.openSuccess, this.openError);
         this.retrieveUserID();
+        db = openDatabase({ name: 'KIWI.db', createFromLocation: 1 }, this.openSuccess, this.openError);
+        this.retrieveName();
     }
 
     componentWillUnmount() {
@@ -80,7 +82,7 @@ export default class HomeScreen extends React.PureComponent {
         try {
             let userID = await AsyncStorage.getItem('user_ID');
             this.setState({ user_ID: userID });
-            this.retrieveName();
+            userImgSource = images[this.state.user_ID].uri;
         } catch (error) {
             alert(error);
         }
@@ -88,11 +90,10 @@ export default class HomeScreen extends React.PureComponent {
 
     render() {
 
-        let userImgSource = images[this.state.user_ID].uri;
-
         return (
             <View style={{ flex: 1, backgroundColor: "#BEED90" }}>
                 <Text style={{ color: "black", textAlign: "center", marginTop: 60, fontFamily: 'Roboto', fontSize: 30 }}>{this.state.fullName}</Text>
+                <Image source={userImgSource} style={styles.profilePic} />
                 <Image source={qrcode} style={styles.qrcode} />
                 <Icon name="power-off" size={40} color={'#007aff'} onPress={() => Alert.alert('Confirmation', 'Are you sure you want to log out?', [{ text: 'Cancel', }, { text: 'OK', onPress: () => this.goToLogin() },], { cancelable: false })} style={{ position: 'absolute', right: 15, top: 10, }} />
                 <Text style={{ textAlign: 'right', fontWeight: 'bold', fontSize: 13, position: 'absolute', right: 15, top: 55 }}>Log Out</Text>
@@ -108,11 +109,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between"
     },
+    profilePic: {
+        width: "60%",
+        height: "40%",
+        resizeMode: "stretch",
+        alignSelf: "center",
+        marginTop: 25
+    },
     qrcode: {
-        flex: 1,
         width: "40%",
         resizeMode: "contain",
         alignSelf: "center",
-        marginTop: 250
     }
 });
