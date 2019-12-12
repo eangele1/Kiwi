@@ -6,6 +6,8 @@ import { StackActions, NavigationActions } from 'react-navigation';
 import qrcode from "./assets/images/qrcode.png";
 import { openDatabase } from 'react-native-sqlite-storage';
 
+import { images } from './user_images.js';
+
 let db;
 
 export default class HomeScreen extends React.PureComponent {
@@ -85,6 +87,9 @@ export default class HomeScreen extends React.PureComponent {
     }
 
     render() {
+
+        let userImgSource = images[this.state.user_ID].uri;
+
         return (
             <View style={{ flex: 1, backgroundColor: "#BEED90" }}>
                 <Text style={{ color: "black", textAlign: "center", marginTop: 60, fontFamily: 'Roboto', fontSize: 30 }}>{this.state.fullName}</Text>
