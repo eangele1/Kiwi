@@ -6,7 +6,6 @@ import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-ta
 import { Button } from 'native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
-let user_ID;
 let db;
 
 export default class ArchiveScreen extends React.PureComponent {
@@ -39,7 +38,8 @@ export default class ArchiveScreen extends React.PureComponent {
         tableData: [],
         tableIDs: [],
         dateSort: null,
-        locationSort: null
+        locationSort: null,
+        user_ID: 0
     };
 
     openSuccess() { console.log("Database is open!"); }
@@ -55,9 +55,8 @@ export default class ArchiveScreen extends React.PureComponent {
     }
 
     async componentDidMount() {
-        this.addButtons();
+        this.retrieveUserID();
         db = openDatabase({ name: 'KIWI.db', createFromLocation: 1 }, this.openSuccess, this.openError);
-        this.populateTable();
     }
 
     componentWillUnmount() {
@@ -66,7 +65,12 @@ export default class ArchiveScreen extends React.PureComponent {
 
     retrieveUserID = async () => {
         try {
-            user_ID = await AsyncStorage.getItem('user_ID');
+            let userID = await AsyncStorage.getItem('user_ID');
+            this.setState({ user_ID: userID });
+
+            this.addButtons();
+            this.populateTable();
+
         } catch (error) {
             alert(error);
         }
@@ -78,11 +82,11 @@ export default class ArchiveScreen extends React.PureComponent {
             let sql = "";
 
             if (this.state.dateSort == null || this.state.dateSort) {
-                sql = "SELECT a_ID, a_eventID, a_date, a_time, a_locationname, a_eventname FROM archive WHERE a_ID = " + user_ID + " ORDER BY (a_date) ASC;";
+                sql = "SELECT a_ID, a_eventID, a_date, a_time, e_locationname, e_name FROM archive, events WHERE a_ID = " + this.state.user_ID + " AND a_eventID == e_ID ORDER BY (a_date) ASC;";
                 this.setState({ dateSort: false });
             }
             else {
-                sql = "SELECT a_ID, a_eventID, a_date, a_time, a_locationname, a_eventname FROM archive WHERE a_ID = " + user_ID + " ORDER BY (a_date) DESC;";
+                sql = "SELECT a_ID, a_eventID, a_date, a_time, e_locationname, e_name FROM archive, events WHERE a_ID = " + this.state.user_ID + " AND a_eventID == e_ID ORDER BY (a_date) DESC;";
                 this.setState({ dateSort: true });
             }
 
@@ -111,8 +115,8 @@ export default class ArchiveScreen extends React.PureComponent {
                         var string = array.join("");
 
                         tempArr2.push(this.militaryToNormalTime(string));
-                        tempArr2.push(user.a_locationname);
-                        tempArr2.push(user.a_eventname);
+                        tempArr2.push(user.e_locationname);
+                        tempArr2.push(user.e_name);
                         tempArr2.push("Delete");
 
                         idArr.push(tempArr1);
@@ -137,11 +141,11 @@ export default class ArchiveScreen extends React.PureComponent {
             let sql = "";
 
             if (this.state.locationSort == null || this.state.locationSort) {
-                sql = "SELECT a_ID, a_eventID, a_date, a_time, a_locationname, a_eventname FROM archive WHERE a_ID = " + user_ID + " ORDER BY (a_locationname) ASC;";
+                sql = "SELECT a_ID, a_eventID, a_date, a_time, e_locationname, e_name FROM archive, events WHERE a_ID = " + this.state.user_ID + " AND a_eventID == e_ID ORDER BY (e_locationname) ASC;";
                 this.setState({ locationSort: false });
             }
             else {
-                sql = "SELECT a_ID, a_eventID, a_date, a_time, a_locationname, a_eventname FROM archive WHERE a_ID = " + user_ID + " ORDER BY (a_locationname) DESC;";
+                sql = "SELECT a_ID, a_eventID, a_date, a_time, e_locationname, e_name FROM archive, events WHERE a_ID = " + this.state.user_ID + " AND a_eventID == e_ID ORDER BY (e_locationname) DESC;";
                 this.setState({ locationSort: true });
             }
 
@@ -170,8 +174,8 @@ export default class ArchiveScreen extends React.PureComponent {
                         var string = array.join("");
 
                         tempArr2.push(this.militaryToNormalTime(string));
-                        tempArr2.push(user.a_locationname);
-                        tempArr2.push(user.a_eventname);
+                        tempArr2.push(user.e_locationname);
+                        tempArr2.push(user.e_name);
                         tempArr2.push("Delete");
 
                         idArr.push(tempArr1);
@@ -214,7 +218,7 @@ export default class ArchiveScreen extends React.PureComponent {
 
     populateTable = () => {
         db.transaction(tx => {
-            let sql = "SELECT a_ID, a_eventID, a_date, a_time, a_locationname, a_eventname FROM archive WHERE a_ID = " + user_ID + ";";
+            let sql = "SELECT a_ID, a_eventID, a_date, a_time, e_locationname, e_name FROM archive, events WHERE a_ID = " + this.state.user_ID + " AND a_eventID == e_ID;";
             tx.executeSql(sql, [], (tx, results) => {
                 const len = results.rows.length;
                 if (!len) {
@@ -240,8 +244,8 @@ export default class ArchiveScreen extends React.PureComponent {
                         var string = array.join("");
 
                         tempArr2.push(this.militaryToNormalTime(string));
-                        tempArr2.push(user.a_locationname);
-                        tempArr2.push(user.a_eventname);
+                        tempArr2.push(user.e_locationname);
+                        tempArr2.push(user.e_name);
                         tempArr2.push("Delete");
 
                         idArr.push(tempArr1);
@@ -267,7 +271,7 @@ export default class ArchiveScreen extends React.PureComponent {
         var eventID = IDs[index][1];
 
         db.transaction(tx => {
-            let sql = "DELETE FROM archive WHERE a_ID = " + user_ID + " AND a_eventID = " + eventID + ";";
+            let sql = "DELETE FROM archive WHERE a_ID = " + this.state.user_ID + " AND a_eventID = " + eventID + ";";
             tx.executeSql(sql, [], (tx, results) => {
                 alert('Deleted successfuly!');
             });
@@ -279,15 +283,13 @@ export default class ArchiveScreen extends React.PureComponent {
     }
 
     render() {
-        this.retrieveUserID();
-
         const element = (index) => (
             <Icon style={{ alignSelf: "center" }} name="trash" color={"blue"} size={20} onPress={() => this.deleteEvent(index)} />
         );
 
         return (
             <View style={{ flex: 1, backgroundColor: "#BEED90" }}>
-                <Table borderStyle={{ borderColor: 'transparent' }}>
+                <Table borderStyle={{ borderColor: 'black' }}>
                     <Row data={this.state.tableHead} style={styles.head} textStyle={styles.text} />
                     {
                         this.state.tableData.map((rowData, index) => (
