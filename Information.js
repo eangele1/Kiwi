@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { ScrollView, StyleSheet, View, ActivityIndicator, Text, TextInput, Image } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { openDatabase } from 'react-native-sqlite-storage';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
@@ -19,7 +19,8 @@ export default class InformationScreen extends React.PureComponent {
         firstNameSort: null,
         lastNameSort: null,
         currClass: "",
-        classNames: []
+        classNames: [],
+        add_new_student: false
     };
 
     retrieveUserIDAndType = async () => {
@@ -445,9 +446,12 @@ export default class InformationScreen extends React.PureComponent {
         var names = this.state.tableData;
 
         db.transaction(tx => {
-            let sql = "INSERT INTO roster VALUES (" + this.state.user_ID + ", 'Test', 'Name', 0, " + this.state.classes[index] + ");";
+            let sql = "INSERT INTO roster VALUES (" + this.state.user_ID + ", '" + this.state.firstName + "', '" + this.state.lastName + "', 0, " + this.state.classes[index] + ");";
             tx.executeSql(sql, [], (tx, results) => {
                 alert('Inserted successfuly!');
+                this.setState({ add_new_student: false });
+                this.setState({ firstName: "" });
+                this.setState({ lastName: "" });
             });
             this.populateTable(this.state.classNames.indexOf(this.state.currClass));
         }, (err) => {
@@ -456,85 +460,137 @@ export default class InformationScreen extends React.PureComponent {
 
     }
 
-    showID = () => {
+    showID = (state) => {
         var Output = [];
 
-        if (this.state.user_type == 'student') {
-            Output.push(<Text key={0} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Student ID: " + this.state.user_ID}</Text>);
-            Output.push(
-                <Table key={1} borderStyle={{ borderColor: 'transparent' }}>
-                    <Row data={this.state.tableHead} style={styles.head} textStyle={styles.text} />
-                    {
-                        this.state.tableData.map((rowData, index) => (
-                            <TableWrapper key={index} style={styles.row}>
-                                {
-                                    rowData.map((cellData, cellIndex) => (
-                                        <Cell key={cellIndex} data={cellData} textStyle={styles.text} />
-                                    ))
-                                }
-                            </TableWrapper>
-                        ))
-                    }
-                </Table>
-            );
+        if (!state) {
+            if (this.state.user_type == 'student') {
+                Output.push(<Text key={0} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Student ID: " + this.state.user_ID}</Text>);
+                Output.push(
+                    <Table key={1} borderStyle={{ borderColor: 'transparent' }}>
+                        <Row data={this.state.tableHead} style={styles.head} textStyle={styles.text} />
+                        {
+                            this.state.tableData.map((rowData, index) => (
+                                <TableWrapper key={index} style={styles.row}>
+                                    {
+                                        rowData.map((cellData, cellIndex) => (
+                                            <Cell key={cellIndex} data={cellData} textStyle={styles.text} />
+                                        ))
+                                    }
+                                </TableWrapper>
+                            ))
+                        }
+                    </Table>
+                );
+            }
+            else {
+
+                const element = (index) => (
+                    <Icon style={{ alignSelf: "center" }} name="trash" color={"blue"} size={20} onPress={() => this.deleteStudent(index)} />
+                );
+
+                Output.push(<Text key={0} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Professor ID: " + this.state.user_ID}</Text>);
+
+                Output.push(
+                    <Icon key={1}
+                        name="user-plus"
+                        size={40}
+                        color={'blue'}
+                        onPress={() => this.setState({ add_new_student: true })}
+                        style={{
+                            position: 'absolute',
+                            right: 20,
+                            top: 30,
+                        }}
+                    />
+                );
+
+                for (let index = 0; index < this.state.classes.length; index++) {
+
+                    let idx = index;
+
+                    Output.push(<Button key={idx + 2} onPress={() => this.populateTable(idx)} style={{ backgroundColor: "blue", width: '20%', justifyContent: "center", margin: 10, borderRadius: 15 }}><Text style={{ color: "white", fontSize: 15 }}>{this.state.classNames[idx]}</Text></Button>);
+                }
+
+                Output.push(<Text key={6} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Current class: " + this.state.currClass}</Text>);
+
+                Output.push(
+                    <Table key={7} borderStyle={{ borderColor: 'transparent' }}>
+                        <Row data={this.state.tableHead} style={styles.head} textStyle={styles.text} />
+                        {
+                            this.state.tableData.map((rowData, index) => (
+                                <TableWrapper key={index} style={styles.row}>
+                                    {
+                                        rowData.map((cellData, cellIndex) => (
+                                            <Cell key={cellIndex} data={cellIndex === 3 ? element(index) : cellData} textStyle={styles.text} />
+                                        ))
+                                    }
+                                </TableWrapper>
+                            ))
+                        }
+                    </Table>
+                );
+
+                Output.push(<Image key={8} style={{ width: "30%", height: "30%", resizeMode: "stretch", position: 'absolute', right: 110, top: 70 }} source={require('./assets/images/boi.png')} />);
+            }
+        }
+        return Output;
+    }
+
+    handleSubmit = () => {
+        if (this.state.firstName == "" && this.state.lastName == "") {
+            alert("Nothing entered!");
+        }
+        else if (this.state.firstName == "") {
+            alert("No first name entered!");
+        }
+        else if (this.state.lastName == "") {
+            alert("No last name entered!");
         }
         else {
+            this.insertStudent(this.state.classNames.indexOf(this.state.currClass));
+        }
+    }
 
-            const element = (index) => (
-                <Icon style={{ alignSelf: "center" }} name="trash" color={"blue"} size={20} onPress={() => this.deleteStudent(index)} />
-            );
+    handleFirstNameChange = (fName) => { this.setState({ firstName: fName }); }
+    handleLastNameChange = (lName) => { this.setState({ lastName: lName }); }
 
-            Output.push(<Text key={0} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Professor ID: " + this.state.user_ID}</Text>);
+    showNameInput = (state) => {
 
+        Output = []
+
+        if (state) {
             Output.push(
-                <Icon key={1}
-                    name="user-plus"
-                    size={40}
-                    color={'blue'}
-                    onPress={() => this.insertStudent(this.state.classNames.indexOf(this.state.currClass))}
-                    style={{
-                        position: 'absolute',
-                        right: 20,
-                        top: 30,
-                    }}
-                />
-            );
+                <ScrollView key={0} contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: 'center', }} style={{ flex: 1 }} scrollEnabled={true} onContentSizeChange={this.onContentSizeChange}>
 
-            for (let index = 0; index < this.state.classes.length; index++) {
+                    <Text style={styles.prompt}>Input information.</Text>
+                    <TextInput style={{ fontSize: 20, padding: 10, width: "70%", alignSelf: "center" }} value={this.state.firstName} onChangeText={this.handleFirstNameChange} placeholder="First Name" underlineColorAndroid="grey" />
+                    <TextInput style={{ fontSize: 20, padding: 10, width: "70%", alignSelf: "center" }} value={this.state.lastName} onChangeText={this.handleLastNameChange} placeholder="Last Name" underlineColorAndroid="grey" />
+                    <Button onPress={() => this.handleSubmit()} style={{ backgroundColor: "yellow", alignSelf: "center", width: '50%', justifyContent: "center", margin: 10 }}><Text style={{ color: "black", fontSize: 20 }}>Submit</Text></Button>
 
-                let idx = index;
+                    <View style={{ position: 'absolute', left: 30, top: 30 }}>
+                        <Icon
+                            name="arrow-left"
+                            size={40}
+                            color={'#007aff'}
+                            onPress={() => this.setState({ add_new_student: false })}
+                        />
+                    </View>
 
-                Output.push(<Button key={idx + 2} onPress={() => this.populateTable(idx)} style={{ backgroundColor: "blue", width: '20%', justifyContent: "center", margin: 10, borderRadius: 15 }}><Text style={{ color: "white", fontSize: 15 }}>{this.state.classNames[idx]}</Text></Button>);
-            }
-
-            Output.push(<Text key={6} style={{ fontSize: 22, color: "black", paddingLeft: 10, paddingRight: 10 }}>{"Current class: " + this.state.currClass}</Text>);
-
-            Output.push(
-                <Table key={7} borderStyle={{ borderColor: 'transparent' }}>
-                    <Row data={this.state.tableHead} style={styles.head} textStyle={styles.text} />
-                    {
-                        this.state.tableData.map((rowData, index) => (
-                            <TableWrapper key={index} style={styles.row}>
-                                {
-                                    rowData.map((cellData, cellIndex) => (
-                                        <Cell key={cellIndex} data={cellIndex === 3 ? element(index) : cellData} textStyle={styles.text} />
-                                    ))
-                                }
-                            </TableWrapper>
-                        ))
-                    }
-                </Table>
+                </ScrollView>
             );
         }
 
         return Output;
+
     }
 
     render() {
 
         return (
             <View style={{ flex: 1, backgroundColor: "#BEED90" }}>
-                {this.showID()}
+                {this.showID(this.state.add_new_student)}
+                {this.showNameInput(this.state.add_new_student)}
             </View>
         );
     }
@@ -543,5 +599,12 @@ export default class InformationScreen extends React.PureComponent {
 const styles = StyleSheet.create({
     head: { height: 40, backgroundColor: '#D3D3D3' },
     text: { margin: 6, fontSize: 12 },
-    row: { flexDirection: 'row', backgroundColor: 'white' }
+    row: { flexDirection: 'row', backgroundColor: 'white' },
+    prompt: {
+        fontSize: 27.5,
+        color: "black",
+        textAlign: "center",
+        padding: 20,
+        paddingTop: 50
+    }
 });
