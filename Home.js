@@ -60,6 +60,8 @@ export default class HomeScreen extends React.PureComponent {
     /* Logs user out of application */
     logOut = async () => {
         try {
+            this.setState({ user_ID: 0 });
+            this.setState({ fullName: "" });
             await AsyncStorage.setItem('isLoggedIn', "false");
             await AsyncStorage.setItem('user_ID', "");
             await AsyncStorage.setItem('user_type', "");
